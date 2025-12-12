@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Oyunlu Hesap Makinesi</title>
+  <style>
+    :root{
+      --bg:#0b1220; --card:#111a2e; --text:#e8eefc; --muted:#9db0d6;
+      --btn:#1b2a4a; --btn2:#24375f; --accent:#4f8cff; --danger:#ff5a7a;
+      --ok:#39d98a; --shadow: 0 18px 60px rgba(0,0,0,.45); --radius:18px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    body{
+      margin:0; min-height:100vh; display:grid; place-items:center;
+      background: radial-gradient(900px 500px at 20% 10%, rgba(79,140,255,.25), transparent 55%),
+                  radial-gradient(800px 420px at 85% 75%, rgba(255,90,122,.18), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+    .wrap{ width:min(900px, 94vw); }
+    header{
+      display:flex; justify-content:space-between; align-items:center;
+      margin:6px 0 14px; gap:12px;
+    }
+    header h1{ font-size:20px; margin:0; letter-spacing:.3px; }
+    header .tag{
+      font-size:12px; color:var(--muted); padding:6px 10px; border:1px solid rgba(157,176,214,.25);
+      border-radius:999px; background: rgba(255,255,255,.03);
+      text-align:center;
+    }
+    .grid{
+      display:grid; gap:14px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width:860px){
+      .grid{ grid-template-columns: 420px 1fr; align-items:start; }
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid rgba(157,176,214,.18);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .screen{
+      padding:18px 18px 14px;
+      background: rgba(0,0,0,.18);
+      border-bottom:1px solid rgba(157,176,214,.16);
+    }
+    .expr{ min-height:22px; color:var(--muted); font-size:13px; word-break:break-all; }
+    .out{
+      margin-top:10px; font-size:34px; font-weight:800;
+      text-align:right; letter-spacing:.5px; word-break:break-all;
+    }
+    .keys{
+      display:grid; gap:10px;
+      grid-template-columns: repeat(4, 1fr);
+      padding:14px;
+      background: rgba(0,0,0,.06);
+    }
+    button{
+      appearance:none; border:0; cursor:pointer;
+      background: var(--btn);
+      color: var(--text);
+      padding:14px 10px;
+      border-radius: 14px;
+      font-size:16px;
+      font-weight:700;
+      transition: transform .06s ease, filter .15s ease, background .15s ease;
+      box-shadow: 0 10px 24px rgba(0,0,0,.22);
+      user-select:none;
+    }
+    button:hover{ filter: brightness(1.08); }
+    button:active{ transform: translateY(1px) scale(.99); }
+    .op{ background: var(--btn2); }
+    .eq{ background: linear-gradient(180deg, rgba(79,140,255,.95), rgba(79,140,255,.75)); }
+    .danger{ background: linear-gradient(180deg, rgba(255,90,122,.9), rgba(255,90,122,.7)); }
+    .wide{ grid-column: span 2; }
+    .panel{
+      padding:14px;
+    }
+    .tabs{
+      display:flex; gap:8px; padding:12px; border-bottom:1px solid rgba(157,176,214,.16);
+      background: rgba(0,0,0,.08);
+      flex-wrap:wrap;
+    }
+    .tab{
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(157,176,214,.18);
+      color: var(--muted);
+      padding:8px 10px;
+      border-radius: 999px;
+      font-size:13px;
+      font-weight:700;
+    }
+    .tab.active{
+      color: var(--text);
+      border-color: rgba(79,140,255,.55);
+      background: rgba(79,140,255,.14);
+    }
+    .section{ display:none; padding:14px; }
+    .section.active{ display:block; }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .input{
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(157,176,214,.18);
+      border-radius: 14px;
+      padding:12px 12px;
+      color: var(--text);
+      outline:none;
+      font-size:14px;
+      width: min(240px, 100%);
+    }
+    .mini{
+      font-size:12px; color: var(--muted);
+      line-height:1.45;
+    }
+    .status{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius: 14px;
+      border:1px solid rgba(157,176,214,.18);
+      background: rgba(255,255,255,.03);
+      font-size:13px;
+      color: var(--muted);
+    }
+    .status.ok{ border-color: rgba(57,217,138,.35); color: rgba(232,238,252,.92); background: rgba(57,217,138,.08); }
+    .status.bad{ border-color: rgba(255,90,122,.35); color: rgba(232,238,252,.92); background: rgba(255,90,122,.08); }
+    .pill{
+      display:inline-block;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid rgba(157,176,214,.18);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      font-size:12px;
+      font-weight:700;
+    }
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(157,176,214,.18);
+      padding:2px 6px; border-radius:8px;
+      color: var(--text);
+    }
+    footer{ margin-top:10px; font-size:12px; color:var(--muted); text-align:center; }
+    .btn-ok{ background: linear-gradient(180deg, rgba(57,217,138,.9), rgba(57,217,138,.65)); }
+    .btn-ghost{ background: rgba(255,255,255,.04); border:1px solid rgba(157,176,214,.18); }
+    .hint{ margin-top:10px; font-size:12px; color: var(--muted); }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Oyunlu Hesap Makinesi</h1>
+      <div class="tag">Mini Oyunlar ↓</div>
+    </header>
+
+    <div class="grid">
+      <!-- CALCULATOR -->
+      <main class="card" aria-label="Hesap makinesi">
+        <div class="screen">
+          <div class="expr" id="expr">Hazır</div>
+          <div class="out" id="out">0</div>
+        </div>
+
+        <div class="keys">
+          <button class="danger" data-action="clear">C</button>
+          <button class="op" data-action="back">⌫</button>
+          <button class="op" data-value="%">%</button>
+          <button class="op" data-value="/">÷</button>
+
+          <button data-value="7">7</button>
+          <button data-value="8">8</button>
+          <button data-value="9">9</button>
+          <button class="op" data-value="*">×</button>
+
+          <button data-value="4">4</button>
+          <button data-value="5">5</button>
+          <button data-value="6">6</button>
+          <button class="op" data-value="-">−</button>
+
+          <button data-value="1">1</button>
+          <button data-value="2">2</button>
+          <button data-value="3">3</button>
+          <button class="op" data-value="+">+</button>
+
+          <button class="wide" data-value="0">0</button>
+          <button data-value=".">.</button>
+          <button class="eq" data-action="equals">=</button>
+        </div>
+      </main>
+
+      <!-- GAME / FUN PANEL -->
+      <aside class="card" aria-label="Oyun ve eğlence paneli">
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-tab="game" role="tab">🎮 Sayı Tahmin</button>
+          <button class="tab" data-tab="fun" role="tab">✨ Eğlence Modu</button>
+          <button class="tab" data-tab="about" role="tab">ℹ️ Bilgi</button>
+        </div>
+
+        <!-- GAME -->
+        <section class="section active" id="sec-game">
+          <h2 style="margin:0 0 8px; font-size:16px;">Sayı Tahmin Oyunu</h2>
+          <p class="mini" style="margin:0 0 10px;">
+            1 ile 100 arasında gizli bir sayı tuttum. Tahmin et!
+            <span class="pill">Başla</span>
+          </p>
+
+          <div class="row">
+            <input class="input" id="guessInput" type="number" min="1" max="100" placeholder="Tahmin (1-100)" />
+            <button class="btn-ok" id="guessBtn">Tahmin Et</button>
+            <button class="btn-ghost" id="newGameBtn">Yeni Oyun</button>
+          </div>
+
+          <div class="status" id="gameStatus">İpucu burada görünecek.</div>
+
+          <div class="hint">
+            Klavye: <span class="kbd">Enter</span> ile tahmin et • <span class="kbd">N</span> yeni oyun
+          </div>
+        </section>
+
+        <!-- FUN -->
+        <section class="section" id="sec-fun">
+          <h2 style="margin:0 0 8px; font-size:16px;">Eğlence Modu</h2>
+          <p class="mini" style="margin:0 0 10px;">
+            Hesap makinesi sıkıcı olmasın diye küçük sürprizler 😄
+          </p>
+
+          <div class="row">
+            <button id="fortuneBtn" class="btn-ok">🔮 Rastgele Mesaj</button>
+            <button id="challengeBtn" class="op">🏁 Mini Görev</button>
+            <button id="soundBtn" class="btn-ghost">🔊 Ses: Aç</button>
+          </div>
+
+          <div class="status" id="funStatus">Bir butona bas ve eğlen!</div>
+          <div class="hint">Not: Ses sadece tarayıcı içi basit “bip”tir (kurulum gerekmez).</div>
+        </section>
+
+        <!-- ABOUT -->
+        <section class="section" id="sec-about">
+          <h2 style="margin:0 0 8px; font-size:16px;">Bu Sayfa Hakkında Bilgi</h2>
+          <p class="mini" style="margin:0 0 10px;">
+            Bu sayfa, Hem hesap makinesi işlevi sunar hem de mini oyun/eğlence içerir.
+          </p>
+          
+        </section>
+      </aside>
+    </div>
+
+    <footer>
+      Hesap Makinesi: <span class="kbd">0-9</span> <span class="kbd">+</span> <span class="kbd">-</span> <span class="kbd">*</span> <span class="kbd">/</span> •
+      <span class="kbd">Enter</span>= • <span class="kbd">Backspace</span>⌫ • <span class="kbd">Esc</span>=C
+    </footer>
+  </div>
+
+  <script>
+    // ---------- Calculator ----------
+    const out = document.getElementById("out");
+    const expr = document.getElementById("expr");
+
+    let current = "0";
+    let formula = "";
+    let justEvaluated = false;
+
+    function render(){
+      out.textContent = current;
+      expr.textContent = formula ? formula : "Hazır";
+    }
+
+    function appendValue(v){
+      if (justEvaluated && /[0-9.]/.test(v)) {
+        formula = "";
+        current = "0";
+      }
+      justEvaluated = false;
+
+      if (v === ".") {
+        if (current.includes(".")) return;
+        current = current === "" ? "0." : current + ".";
+      } else {
+        current = (current === "0") ? v : (current + v);
+      }
+      render();
+    }
+
+    function appendOp(op){
+      justEvaluated = false;
+      if (current === "") return;
+      formula += (formula ? " " : "") + current + " " + op;
+      current = "";
+      render();
+    }
+
+    function clearAll(){
+      current = "0";
+      formula = "";
+      justEvaluated = false;
+      render();
+    }
+
+    function backspace(){
+      if (current === "" || current === "0") return;
+      current = current.slice(0, -1);
+      if (current === "" || current === "-") current = "0";
+      render();
+    }
+
+    function safeEval(text){
+      if (!/^[0-9+\-*/%.() ]+$/.test(text)) return null;
+      try{
+        const result = Function("return (" + text + ")")();
+        if (!isFinite(result)) return null;
+        return result;
+      }catch{
+        return null;
+      }
+    }
+
+    function equals(){
+      const full = (formula ? (formula + " " + (current === "" ? "0" : current)) : current).trim();
+      const result = safeEval(full);
+      if (result === null){
+        expr.textContent = "Hata: Geçersiz işlem";
+        out.textContent = "0";
+        current = "0";
+        formula = "";
+        justEvaluated = true;
+        return;
+      }
+      formula = full + " =";
+      current = String(Math.round((result + Number.EPSILON) * 1e10) / 1e10);
+      justEvaluated = true;
+      render();
+    }
+
+    document.querySelector(".keys").addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+
+      const action = btn.dataset.action;
+      const value  = btn.dataset.value;
+
+      if (action === "clear") return clearAll();
+      if (action === "back")  return backspace();
+      if (action === "equals") return equals();
+
+      if (value && /[0-9.]/.test(value)) return appendValue(value);
+      if (value && /[+\-*/%]/.test(value)) return appendOp(value);
+    });
+
+    // Calculator keyboard
+    window.addEventListener("keydown", (e) => {
+      // game panel uses Enter too; it's ok.
+      if (e.key >= "0" && e.key <= "9") return appendValue(e.key);
+      if (e.key === ".") return appendValue(".");
+      if (["+", "-", "*", "/", "%"].includes(e.key)) return appendOp(e.key);
+      if (e.key === "Enter" || e.key === "=") return equals();
+      if (e.key === "Backspace") return backspace();
+      if (e.key === "Escape") return clearAll();
+    });
+
+    render();
+
+    // ---------- Tabs ----------
+    const tabs = document.querySelectorAll(".tab");
+    const sections = {
+      game: document.getElementById("sec-game"),
+      fun: document.getElementById("sec-fun"),
+      about: document.getElementById("sec-about"),
+    };
+
+    tabs.forEach(t => t.addEventListener("click", () => {
+      tabs.forEach(x => x.classList.remove("active"));
+      t.classList.add("active");
+      const key = t.dataset.tab;
+      Object.values(sections).forEach(s => s.classList.remove("active"));
+      sections[key].classList.add("active");
+    }));
+
+    // ---------- Mini game: Guess the number ----------
+    const guessInput = document.getElementById("guessInput");
+    const guessBtn = document.getElementById("guessBtn");
+    const newGameBtn = document.getElementById("newGameBtn");
+    const gameStatus = document.getElementById("gameStatus");
+
+    let secret, tries;
+
+    function newGame(){
+      secret = Math.floor(Math.random() * 100) + 1;
+      tries = 0;
+      gameStatus.className = "status";
+      gameStatus.textContent = "Yeni oyun başladı! 1-100 arasında tahmin et.";
+      guessInput.value = "";
+      guessInput.focus();
+    }
+
+    function checkGuess(){
+      const v = Number(guessInput.value);
+      if (!v || v < 1 || v > 100){
+        gameStatus.className = "status bad";
+        gameStatus.textContent = "1 ile 100 arasında bir sayı gir.";
+        return;
+      }
+      tries++;
+
+      if (v === secret){
+        gameStatus.className = "status ok";
+        gameStatus.textContent = `Tebrikler! Sayı ${secret} idi. ${tries} denemede bildin 🎉`;
+        return;
+      }
+      if (tries >= 10){
+        gameStatus.className = "status bad";
+        gameStatus.textContent = `10 deneme doldu 😅 Sayı ${secret} idi. Yeni oyun başlat!`;
+        return;
+      }
+
+      const hint = v < secret ? "Daha BÜYÜK dene ⬆️" : "Daha KÜÇÜK dene ⬇️";
+      gameStatus.className = "status";
+      gameStatus.textContent = `${hint} (Deneme: ${tries}/10)`;
+    }
+
+    guessBtn.addEventListener("click", checkGuess);
+    newGameBtn.addEventListener("click", newGame);
+
+    // Enter to guess (when input focused)
+    guessInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") checkGuess();
+    });
+
+    // N for new game
+    window.addEventListener("keydown", (e) => {
+      if (e.key.toLowerCase() === "n") newGame();
+    });
+
+    newGame();
+
+    // ---------- Fun mode ----------
+    const funStatus = document.getElementById("funStatus");
+    const fortuneBtn = document.getElementById("fortuneBtn");
+    const challengeBtn = document.getElementById("challengeBtn");
+    const soundBtn = document.getElementById("soundBtn");
+
+    const fortunes = [
+      "Bugün commit atarsan şansın açılır 😄",
+      "Bir hata bulursan, o bir öğrenme fırsatıdır!",
+      "Küçük adımlar büyük projeler yapar.",
+      "CSS nazlıdır ama iyi anlaşınca efsane olur.",
+      "Bugün ‘display: flex;’ günü!",
+      "Kendine güven: Sen bunu yaparsın 💪",
+    ];
+
+    const challenges = [
+      "Mini görev: 12 + 7 * 2 işlemini hesapla.",
+      "Mini görev: 99 / 3 kaç eder?",
+      "Mini görev: 15% of 200 (yani 200 * 0.15) kaç?",
+      "Mini görev: 8 * 8 - 10 işlemini yap.",
+      "Mini görev: 3.14 + 2.86 = ?",
+    ];
+
+    // simple beep
+    let soundOn = true;
+    function beep(){
+      if (!soundOn) return;
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine";
+      o.frequency.value = 660;
+      g.gain.value = 0.05;
+      o.connect(g); g.connect(ctx.destination);
+      o.start();
+      setTimeout(() => { o.stop(); ctx.close(); }, 80);
+    }
+
+    fortuneBtn.addEventListener("click", () => {
+      beep();
+      const msg = fortunes[Math.floor(Math.random() * fortunes.length)];
+      funStatus.className = "status ok";
+      funStatus.textContent = msg;
+    });
+
+    challengeBtn.addEventListener("click", () => {
+      beep();
+      const msg = challenges[Math.floor(Math.random() * challenges.length)];
+      funStatus.className = "status";
+      funStatus.textContent = msg + " (Hesap makinesiyle deneyebilirsin)";
+    });
+
+    soundBtn.addEventListener("click", () => {
+      soundOn = !soundOn;
+      soundBtn.textContent = soundOn ? "🔊 Ses: Aç" : "🔇 Ses: Kapalı";
+      funStatus.className = "status";
+      funStatus.textContent = soundOn ? "Ses açıldı." : "Ses kapatıldı.";
+      if (soundOn) beep();
+    });
+  </script>
+</body>
+</html>
