@@ -1,4 +1,4 @@
-# Yönetim Sistemi Projesi
+# Bilgisayar Programcılığı Öğrencisi
 
 Bu proje, Bilgisayar Programcılığı dersi kapsamında geliştirilmiş basit bir yönetim sistemi web arayüzüdür.
 HTML ve CSS kullanılarak hazırlanmıştır.
